@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 240" width="300" height="240">
+  <!-- water -->
+  <ellipse cx="150" cy="205" rx="130" ry="18" fill="#7ec8e3"/>
+  <path d="M40 205 q15 -8 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0" fill="none" stroke="#4aa3c7" stroke-width="3"/>
+  <!-- body -->
+  <ellipse cx="150" cy="160" rx="85" ry="45" fill="#ffd93b"/>
+  <!-- tail -->
+  <path d="M70 150 L45 120 L85 135 Z" fill="#ffd93b"/>
+  <!-- wing -->
+  <path d="M120 150 q35 -25 70 0 q-30 30 -70 0 Z" fill="#f4c20d"/>
+  <!-- head -->
+  <circle cx="215" cy="95" r="38" fill="#ffd93b"/>
+  <!-- beak -->
+  <path d="M245 95 q30 -5 38 8 q-15 12 -38 4 Z" fill="#ff8c1a"/>
+  <!-- eye -->
+  <circle cx="225" cy="85" r="7" fill="#222"/>
+  <circle cx="227" cy="83" r="2" fill="#fff"/>
+</svg>
