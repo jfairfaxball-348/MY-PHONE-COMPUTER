@@ -31,7 +31,7 @@ old_parse = '''reply="$(jq -r '.choices[0].message.content // empty' <<<"$respon
 new_parse = '''# NEWTON_TTS_DIAGNOSTICS_V034
 echo 'Newton: MODEL_PARSE_STARTED'
 reply="$(jq -r '.choices[0].message.content // empty' <<<"$response" 2>/dev/null || true)"
-echo "Newton: MODEL_PARSE_FINISHED chars=\${#reply}"'''
+echo "Newton: MODEL_PARSE_FINISHED chars=${#reply}"'''
 old_speech = '''echo "Newton: $reply"
 if termux-tts-speak -s MUSIC -l en -n GB "$reply"; then
   echo 'Newton: TTS_SUBMITTED'
@@ -40,7 +40,7 @@ else
 fi
 sleep 1.5'''
 new_speech = '''# Do not print the actual answer in diagnostics: only non-sensitive stage markers.
-echo "Newton: TTS_START chars=\${#reply}"
+echo "Newton: TTS_START chars=${#reply}"
 tts_start="$(date +%s)"
 if timeout 20 termux-tts-speak -s MUSIC -l en -n GB "$reply" >/dev/null 2>"$TMP/tts-error"; then
   echo "Newton: TTS_SUBMITTED elapsed_seconds=$(($(date +%s)-tts_start))"
