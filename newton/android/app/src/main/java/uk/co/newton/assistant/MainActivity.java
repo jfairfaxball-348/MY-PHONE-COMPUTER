@@ -3,6 +3,9 @@ package uk.co.newton.assistant;
 import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -21,6 +24,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 import java.lang.ref.WeakReference;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,7 +42,7 @@ public final class MainActivity extends Activity {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private TextView stateText, detailsText;
-    private Button startButton, stopButton, accessButton;
+    private Button startButton, stopButton, accessButton, diagnosticsButton;
     private boolean visible = false;
     private boolean statusPending = false;
     private long statusSentAt = 0;
@@ -139,12 +143,22 @@ public final class MainActivity extends Activity {
         add(page, stopButton, 12);
         stopButton.setOnClickListener(v -> runUserCommand("stop"));
 
+        diagnosticsButton = button("Copy diagnostics", 0xFF30465C, Color.WHITE);
+        add(page, diagnosticsButton, 16);
+        diagnosticsButton.setOnClickListener(v -> {
+            if (!hasPermission()) {
+                requestAccess("diagnostics");
+                return;
+            }
+            show("Reading diagnostics…", "Gathering a private, text-free fault summary");
+            issue("diagnostics", "diagnostics.sh");
+        });
         accessButton = button("Allow Termux access", 0xFF30465C, Color.WHITE);
         add(page, accessButton, 21);
         accessButton.setOnClickListener(v -> requestAccess("status"));
 
         TextView note = text(
-            "Your existing Termux AI runs locally on this phone. You can leave this screen after starting Newton. " +
+            "If a conversation stalls, tap Copy diagnostics and paste the summary into chat. Your existing Termux AI stays on this phone. " +
             "Background and screen-locked listening have not yet been verified.", 13, MUTED, false);
         note.setLineSpacing(dp(this, 4), 1f);
         add(page, note, 34);
@@ -189,7 +203,7 @@ public final class MainActivity extends Activity {
             stopButton.setEnabled(false);
             handler.postDelayed(() -> stopButton.setEnabled(true), 4500);
             show("Stopping…", "Asking Newton to stop cleanly");
-            issue("stop", "stop.sh");
+            issue("stop", "stop-safe.sh");
         }
     }
     private void requestAccess(String action) {
@@ -205,6 +219,7 @@ public final class MainActivity extends Activity {
             String action = deferred;
             deferred = "";
             if ("start".equals(action) || "stop".equals(action)) runUserCommand(action);
+            else if ("diagnostics".equals(action)) issue("diagnostics", "diagnostics.sh");
             else {
                 show("Checking…", "Access granted. Reading Newton status");
                 issue("status", "status.sh");
@@ -243,6 +258,15 @@ public final class MainActivity extends Activity {
     }
     private void onResult(String kind, int exit, String stdout, String stderr) {
         if ("status".equals(kind)) statusPending = false;
+        if ("diagnostics".equals(kind) && exit == 0) {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("Newton diagnostics", stdout));
+            }
+            show("Diagnostics copied", "Paste the summary into our chat. No speech or answer text included.");
+            Toast.makeText(this, "Diagnostic summary copied", Toast.LENGTH_LONG).show();
+            return;
+        }
         if (exit != 0) {
             if (!"status".equals(kind)) show("Command failed", stderr.isEmpty() ?
                     "Check ~/newton/app/logs in Termux" : stderr.substring(0, Math.min(200, stderr.length())));
@@ -272,6 +296,9 @@ public final class MainActivity extends Activity {
                 break;
             case "STARTING":
                 show("Starting…", "Waiting for Qwen and the wake listener");
+                break;
+            case "STOPPING":
+                show("Stopping…", "Finishing microphone and worker shutdown");
                 break;
             case "STOPPED":
                 show("Stopped", "Newton is not currently running");

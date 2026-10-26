@@ -41,3 +41,14 @@ Open Newton, tap **Start Newton**, and watch for the state to change to **Listen
 Android Studio can open the \`newton/android\` folder. This repository's CI build uses JDK 17, Gradle 8.10.2, Android Gradle Plugin 8.7.3, and Android SDK 35. Because the Android Gradle wrapper JAR is not checked in, install Gradle 8.10.2 locally or generate a Gradle wrapper using that version. Run \`gradle :app:assembleDebug\` in \`newton/android\`. The resulting APK is \`app/build/outputs/apk/debug/app-debug.apk\`.
 
 **Security/limitations**: The RUN_COMMAND grant is powerful: only install APKs you trust. The app requests no Internet or microphone permission and transmits no data. Termux's existing Qwen server remains on localhost. Status is a heuristic process probe, not a guarantee the microphone is recording or the full conversation works. Android 16 and Samsung power-saving rules can interrupt the Termux process when the app is backgrounded. App builds use ephemeral debug signing keys and are for testing, not an upgradeable release track. Keep the original widget as a fallback.
+
+
+## v0.3.1 stability patch (experimental)
+
+Known user-reported issues: wake activation can be fiddly, the VAD question stage can stall without a spoken reply, and the original Stop action sometimes leaves listening active. The actual phone logs are not yet available, so this patch **does not claim to have corrected the VAD or wake issue**.
+
+The native Stop action now invokes `stop-safe.sh`, which asks Termux to stop recording, executes the original `stop.sh` with a timeout, terminates only recognizable Newton wake/VAD process trees and the Qwen3 server, then checks for stragglers. All old widget files remain untouched. `diagnostics.sh` extracts counts and stage names from the local log without collecting or returning any transcript, answer or audio. The app's **Copy diagnostics** button copies this summary locally, making the next debugging session evidence-based.
+
+Phone setup requires copying the three updated scripts plus the new `stop-safe.sh` to `~/newton/app` using the versioned installer, with backups first. Keep the original widgets available as a fallback.
+
+**Install caveat:** GitHub Actions debug APKs use an ephemeral signing certificate per run. If Android reports a signing or update conflict, uninstall **only Newton** (not Termux or Termux:API) before installing 0.3.1; then re-grant the RUN_COMMAND permission. A persistent signing strategy belongs in a future release build.
